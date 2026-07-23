@@ -31,10 +31,14 @@ astro dev run backfill create --dag-id taxi_pipeline --from-date 2024-01-01 --to
 
 ## How to inspect task logs
 
-TODO
+Open `taxi_pipeline → Runs → the failed run → the red task → Logs`. Read upward from the final generic message until the first concrete exception, such as `HTTPError`, `DatabaseError`, `Compilation Error`, or `Env var required but not provided`. Also check **Rendered Templates** for `dbt_run` and `dbt_test` to confirm the resolved database host, user, database, and schema. Passwords must remain redacted.
 
 ## Top 3 likely failures and first response
 
-1. TODO — symptom, first check, fix
-2. TODO
-3. TODO
+1. **`ingest_taxi_month` fails with HTTP 403/404.** Check the requested URL and logical date in the log. A future month or mistyped path is deterministic, so retries will not fix it. Trigger/backfill a published month and correct the URL or date range.
+2. **PostgreSQL connection or permission failure.** Confirm `AIRFLOW_STUDENT` in `.env`, then verify `azure_pg` in Admin → Connections. The login and schema name must match, for example role `halyna` writes to `airflow_halyna`. Do not commit credentials.
+3. **`dbt_run` fails.** Read the first dbt `Runtime Error` or `Compilation Error`, not only the final Bash exit code. Confirm `include/dbt_project/profiles.yml` exists, required `PG_*` variables are rendered, and `dbt deps` runs before `dbt run`.
+
+## Safe recovery and escalation
+
+Clear and retry one task only for a transient network or database interruption. Use a backfill after a code or business-logic fix that affects several partitions. If the shared scheduler, shared `azure_pg` connection, or shared VM is broken, do not edit shared settings; report the issue to the teacher.
