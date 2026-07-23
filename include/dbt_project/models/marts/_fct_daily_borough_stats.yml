@@ -1,0 +1,56 @@
+version: 2
+
+models:
+  - name: fct_daily_borough_stats
+    description: |
+      Daily borough-level mart for NYC green taxi pickup activity.
+
+      Grain: one row per pickup_borough and pickup_date.
+
+      Source lineage: built from stg_trips joined with stg_zones.
+      stg_trips reads nyc_taxi.raw_trips.
+      stg_zones reads nyc_taxi.raw_zones.
+
+      Known caveats: stg_trips drops rows with missing pickup_location_id
+      or negative fare_amount. The mart uses an inner join to drop trips
+      whose pickup_location_id does not match a known zone. Real TLC labels
+      such as EWR, Unknown, and dirty NaN borough values remain in the mart.
+      The avg_tip_pct singular test uses WARN severity because very small
+      borough/day groups can legitimately exceed 1 due to outliers.
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - pickup_borough
+            - pickup_date
+
+    columns:
+      - name: pickup_borough
+        description: Borough label from stg_zones.borough for the trip pickup zone.
+        tests:
+          - not_null
+
+      - name: pickup_date
+        description: Calendar date derived from pickup_datetime. Unit is one local pickup day.
+        tests:
+          - not_null
+
+      - name: trip_count
+        description: Number of trips picked up in this borough on this date. Unit is trips.
+        tests:
+          - not_null
+
+      - name: total_fare
+        description: Sum of fare_amount for this borough and date. Unit is US dollars.
+        tests:
+          - not_null
+
+      - name: avg_tip_pct
+        description: Average tip percentage for this borough and date. Calculated as tip_amount divided by fare_amount.
+        tests:
+          - not_null
+
+      - name: avg_trip_distance
+        description: Average trip distance for this borough and date. Unit is miles.
+        tests:
+          - not_null
