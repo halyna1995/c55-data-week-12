@@ -133,12 +133,23 @@ score=$((score + l5))
 pass "Level 5: parameterized runs ($l5/15 pts)"
 
 # ── Level 6 (10 pts): docs filled in ────────────────────────────────────────
+# Count TODO markers in visible markdown only. Starter HTML comments like
+# <!-- Replace every TODO ... --> must not fail a filled-in runbook/AI log.
+todo_count() {
+  local f="$1"
+  python3 - "$f" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+print(len(re.findall(r"TODO", text)))
+PY
+}
 l6=0
 runbook="$REPO_ROOT/RUNBOOK.md"
 ai="$REPO_ROOT/AI_ASSIST.md"
 if file_has_content "$runbook"; then
   rb_chars=$(wc -c < "$runbook" | tr -d ' ')
-  rb_todo=$(grep -c "TODO" "$runbook" 2>/dev/null || true)
+  rb_todo=$(todo_count "$runbook")
   if [[ "$rb_chars" -ge 400 && "$rb_todo" -eq 0 ]]; then
     l6=$((l6 + 5)); pass "RUNBOOK.md: filled in (${rb_chars} chars, no TODO left)"
   else
@@ -149,7 +160,7 @@ else
 fi
 if file_has_content "$ai"; then
   ai_chars=$(wc -c < "$ai" | tr -d ' ')
-  ai_todo=$(grep -c "TODO" "$ai" 2>/dev/null || true)
+  ai_todo=$(todo_count "$ai")
   if [[ "$ai_chars" -ge 400 && "$ai_todo" -eq 0 ]]; then
     l6=$((l6 + 5)); pass "AI_ASSIST.md: filled in (${ai_chars} chars, no TODO left)"
   else
