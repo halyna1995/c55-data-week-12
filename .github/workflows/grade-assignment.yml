@@ -11,4 +11,8 @@ jobs:
       contents: read
       issues: write
       pull-requests: write
-    uses: HackYourFuture/github-actions/.github/workflows/auto-grade.yml@main
+    # Temporary pin: actions/checkout v6 blocks fork checkouts under
+    # pull_request_target unless allow-unsafe-pr-checkout is set.
+    # Revert to HackYourFuture/github-actions@main after
+    # https://github.com/HackYourFuture/github-actions/pull/4 merges.
+    uses: lassebenni/github-actions-fork/.github/workflows/auto-grade.yml@fix/allow-unsafe-pr-checkout-for-autograde
