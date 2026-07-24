@@ -3,8 +3,9 @@
 # The DAG needs a running Astro/Airflow stack and a live Azure PostgreSQL
 # connection that CI cannot reach, so this checks file presence and code
 # patterns in dags/taxi_pipeline.py and the docs. The actual green run,
-# Screenshot files are presence-checked; content, backfill idempotency, and
-# shared-Airflow deploy are reviewed by a teacher.
+# Screenshot files are required (≥3): missing screenshots force pass=false.
+# Content of those shots, backfill idempotency, and shared-Airflow deploy
+# are still reviewed by a teacher.
 # Total points: 100. Passing score: 60.
 set -euo pipefail
 
@@ -218,9 +219,10 @@ shot_count=$(
 if [[ "$shot_count" -ge 3 ]]; then
   l6=$((l6 + 3)); pass "screenshots: found ${shot_count} image file(s) (need ≥3 for Graph + Grid/run + task log)"
 elif [[ "$shot_count" -gt 0 ]]; then
-  fail "screenshots: only ${shot_count} image file(s) — commit at least 3 (local Graph, green Grid/run, one task log; add shared-UI shot when the VM is up)"
+  # Screenshots are required evidence for teacher review — cannot pass without them.
+  blocker "screenshots: only ${shot_count} image file(s) — commit at least 3 (local Graph, green Grid/run, one task log; add shared-UI shot when the VM is up)"
 else
-  fail "screenshots: none found — commit Graph, Grid/run, and task-log images into the PR (any folder)"
+  blocker "screenshots: none found — commit Graph, Grid/run, and task-log images into the PR (any folder). Screenshots are required; a high code score without them still fails."
 fi
 score=$((score + l6))
 pass "Level 6: documentation + screenshots ($l6/10 pts)"

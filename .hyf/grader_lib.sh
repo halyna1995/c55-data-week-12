@@ -7,11 +7,9 @@
 # and a set of common static-analysis checks derived from recurring
 # PR review patterns across cohort c55.
 #
-# blocker(): use for leaked-secret findings (a committed profiles.yml/.env,
-# a hardcoded password/connection string). It behaves like fail() for the
-# printed report, but also flips a flag that forces write_score() to report
-# pass=false regardless of the earned point total -- a leaked secret must
-# be fixed before the PR can pass, it cannot be "pointed around."
+# blocker(): use for findings that must fail the PR regardless of points
+# (leaked secrets, missing required evidence like screenshots). Behaves like
+# fail() in the printed report, but forces write_score() to pass=false.
 
 _grader_details=()
 _grader_blocker=false
@@ -38,7 +36,7 @@ write_score() {
   [[ "$score" -ge "$passing" ]] && pass_flag="true"
   if [[ "$_grader_blocker" == true ]]; then
     pass_flag="false"
-    echo "🚫 A blocker was found (leaked secret) -- forcing pass=false regardless of score." >&2
+    echo "🚫 A blocker was found -- forcing pass=false regardless of score." >&2
   fi
   cat > "$outfile" << JSON
 {
